@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Dorm Night: Snakes & Ladders</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#4a1020;--cream:#f6ecd2;--green:#24523b;--org:#e8762b;--mus:#e5b72e;--ink:#2a140d;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 30%,#7a2036,#3a0b18 70%);color:var(--cream);font-family:'Caveat',cursive,sans-serif;font-size:22px;overflow-x:hidden}
+h1,h2,.mk{font-family:'Permanent Marker',cursive,sans-serif;font-weight:400}
+button{font-family:'Permanent Marker',cursive,sans-serif;cursor:pointer;border:3px solid var(--ink);border-radius:10px;background:var(--mus);color:var(--ink);padding:8px 16px;font-size:18px;box-shadow:4px 4px 0 var(--ink);transition:.1s}
+button:hover:not(:disabled){transform:translate(-1px,-1px) rotate(-1deg)}button:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}button:disabled{opacity:.5;cursor:not-allowed}
+.note{background:var(--cream);color:var(--ink);padding:12px 16px;border-radius:3px;box-shadow:3px 4px 8px #0006;position:relative;transform:rotate(-1.2deg)}
+.note:before{content:"";position:absolute;top:-10px;left:40%;width:70px;height:20px;background:#e5b72ecc;transform:rotate(3deg)}
+#setup{max-width:640px;margin:4vh auto;text-align:center;padding:20px}
+#setup h1{font-size:clamp(30px,6vw,52px);margin:0 0 6px;color:var(--mus);text-shadow:3px 3px 0 #000a;transform:rotate(-2deg)}
+.prow{display:flex;gap:10px;align-items:center;justify-content:center;margin:10px 0}
+.prow input{font:inherit;font-size:24px;padding:4px 10px;border:3px solid var(--ink);border-radius:6px;background:#fffbea;width:200px}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid var(--ink);padding:0;box-shadow:none}.sw.on{outline:4px solid var(--ink);transform:scale(1.15)}
+.cnt button.on{background:var(--org);color:#fff}
+#game{display:none;grid-template-columns:230px auto 250px;gap:16px;justify-content:center;align-items:start;padding:12px}
+aside{display:flex;flex-direction:column;gap:14px}
+.pl{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:#0004;border:3px solid transparent;transition:.3s}
+.pl.cur{background:var(--cream);color:var(--ink);border-color:var(--mus);transform:scale(1.05) rotate(-1deg)}
+.tok{width:34px;height:34px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;font-size:18px;flex:none}
+#bw{width:min(92vh,56vw);aspect-ratio:1}
+#bs{width:100%;height:100%;overflow:visible}
+.pc{transition:transform .28s ease-in-out}
+#dice{width:90px;height:90px;margin:0 auto;background:#fffbea;color:var(--ink);border:4px solid var(--ink);border-radius:16px;display:grid;place-items:center;font-size:56px;font-family:'Permanent Marker';box-shadow:5px 5px 0 #000a}
+#dice.roll{animation:shake .12s infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-6px)}50%{transform:rotate(12deg) translateY(4px)}100%{transform:rotate(-8deg)}}
+.stat{display:flex;justify-content:space-between;border-bottom:2px dashed #f6ecd255;padding:2px 0}
+#msg{min-height:80px;font-size:26px;font-weight:700}
+.ov{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50}
+.ov.on{display:grid}
+.pop{background:var(--cream);color:var(--ink);padding:26px 30px;border-radius:6px;border:5px solid var(--org);max-width:min(520px,92vw);text-align:center;animation:pop .5s cubic-bezier(.3,1.6,.5,1);box-shadow:0 0 0 8px var(--ink),10px 14px 0 8px #0008}
+.pop h2{margin:0;color:var(--org);font-size:46px;transform:rotate(-3deg);animation:wob 1s infinite alternate}
+@keyframes pop{from{transform:scale(.2) rotate(-20deg)}}@keyframes wob{to{transform:rotate(3deg) scale(1.06)}}
+#dtext{font-size:34px;line-height:1.1;margin:14px 0 18px}
+.conf{position:fixed;top:-20px;width:12px;height:18px;z-index:60;animation:fall linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+@media(max-width:1000px){#game{grid-template-columns:1fr}#bw{width:96vw;margin:auto}}
+</style></head><body>
+<div id="setup"><h1>WHO'S SURVIVING DORM NIGHT?</h1><div class="note"><p style="margin:0 0 6px">How many roommates?</p><div class="cnt" id="cnt"></div><div id="rows"></div><p style="margin:8px 0">🍜 ☕ ⏰ 🩴 &nbsp;Snakes will multiply. Dares are mandatory. Sleep is not.</p><button id="go" style="font-size:26px;background:var(--org);color:#fff">START DORM NIGHT!</button></div></div>
+<div id="game"><aside><div class="note"><h2 style="margin:0 0 6px">Roommates</h2><div id="pls"></div></div><div class="note" style="background:#fff2b8"><div class="stat"><span>Turn</span><b id="sTurn">1</b></div><div class="stat"><span>Snakes</span><b id="sSn">3</b></div><div class="stat"><span>Dares done</span><b id="sDr">0</b></div></div></aside>
+<div id="bw"><svg id="bs" viewBox="-120 -120 1240 1240"></svg></div>
+<aside><div class="note" style="text-align:center"><div id="turnName" class="mk" style="margin-bottom:10px;font-size:24px"></div><div id="dice">🎲</div><br><button id="rollBtn" style="background:var(--org);color:#fff;font-size:24px">ROLL DICE</button></div>
+<div class="note" id="msg" style="transform:rotate(1.5deg);background:#fff2b8">Dorm night begins...</div>
+<div style="display:flex;gap:10px;justify-content:center"><button id="snd">🔊</button><button id="rst">Restart</button></div></aside></div>
+<div class="ov" id="modal"><div class="pop"><h2>DORM DARE!</h2><div id="who" class="mk"></div><div id="dtext"></div><button id="dDone" style="background:#3fa66b;color:#fff">DONE ✓</button> <button id="dNew">NEW DARE ↻</button></div></div>
+<div class="ov" id="win"><div class="pop"><h2 style="font-size:54px">🏆 WINNER!</h2><div id="wname" class="mk" style="font-size:34px;margin:12px 0"></div><p>Survived dorm night with their dignity (mostly).</p><button id="again">PLAY AGAIN</button></div></div>
+<script>
+const COLORS=['#e4572e','#f2b134','#3fa66b','#4d7cfe','#d65db1','#2ec4b6'],EMO=['🩴','🍜','☕','⏰'],SNC=['#3b8f4f','#c9602a','#7a9a2a','#8a3b8a','#2c7d86','#b8902a','#a33a3a','#5a7a3a'];
+const LADDERS=[[4,25],[9,31],[21,42],[28,84],[51,67],[71,91]];
+const DARESQ=[12,23,34,45,56,63,77,88,95];
+const BASE=["Talk like a news reporter until your next turn.","Do your best runway walk across the room.","Speak only in questions until your next turn.","Let another player choose your phone wallpaper for 10 minutes.","Sing the chorus of any song dramatically.","Recreate someone's Instagram pose.","Do 10 dramatic squats.","Give everyone in the room a ridiculous nickname.","Pretend you're a strict hostel warden for 30 seconds.","Make an advertisement for a random object in the room.","Talk in slow motion until your next turn.","Give a motivational speech about instant noodles.","Do your best villain laugh.","Freeze like a statue until somebody rolls the dice.","Narrate another player's turn like a sports commentator.","Act like you've just won an Oscar.","Let the group choose a word you cannot say until your next turn.","Imitate another player until they guess who you're copying.","Invent a conspiracy theory about something in the room.","Dance for 15 seconds with no music.","Give a TED Talk about why sleeping is productive.","Speak in an overly formal way until your next turn.","Make up a 10-second song about hostel life."];
+const A=["Whisper everything","Talk like a pirate","Speak like a nature documentary narrator","Act like a very sleepy cat","Talk like a dramatic anime hero","Speak like an airline pilot","Walk like a penguin","Talk like a cooking show host"],B=["until your next turn","for the next two rolls","until someone makes you laugh","for one full minute"];
+const GEN=[];A.forEach(a=>B.forEach(b=>GEN.push(a+" "+b+".")));
+["Rate everyone's outfit out loud like a fashion judge.","Hold a 20-second silent argument with a pillow.","Introduce yourself as the CEO of a noodle empire.","Describe your day as a movie trailer.","Do an impression of the warden catching you after curfew.","Pitch a startup idea based on the nearest slipper.","Apologize dramatically to the nearest snake.","Do a weather forecast for tomorrow's exam results."].forEach(x=>GEN.push(x));
+const POOL=BASE.concat(GEN);
+const QUIPS=["Things are getting suspicious...","Dorm night is escalating.","Bad decisions were made.","Your roommate is judging you.","Who ate the last noodles?","Lights out in 5 minutes. Allegedly.","The warden heard that."];
+let G,snd=true,ac,raf;
+const $=id=>document.getElementById(id),sleep=ms=>new Promise(r=>setTimeout(r,ms)),rnd=n=>Math.floor(Math.random()*n),pick=a=>a[rnd(a.length)];
+const NS="http://www.w3.org/2000/svg";
+function el(t,at,p){const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);if(p)p.appendChild(e);return e}
+function xy(n){const r=Math.floor((n-1)/10);let c=(n-1)%10;if(r%2)c=9-c;return{x:c*100+50,y:(9-r)*100+50}}
+function tone(f,d,type='sine',v=.08,sl=0,delay=0){if(!snd)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const t=ac.currentTime+delay,o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(sl)o.frequency.exponentialRampToValueAtTime(sl,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g).connect(ac.destination);o.start(t);o.stop(t+d)}catch(e){}}
+const S={roll(){for(let i=0;i<7;i++)tone(300+rnd(300),.06,'square',.04,0,i*.09)},step(){tone(520,.08,'triangle',.07)},hiss(){tone(3000,.7,'sawtooth',.03,900)},ladder(){for(let i=0;i<5;i++)tone(400+i*120,.12,'triangle',.07,0,i*.1)},dare(){[523,659,784,1046].forEach((f,i)=>tone(f,.15,'square',.06,0,i*.1))},win(){[523,659,784,1046,784,1046,1318].forEach((f,i)=>tone(f,.25,'triangle',.09,0,i*.14))}};
+// setup
+let np=3,setup=[{n:'',c:0},{n:'',c:1},{n:'',c:2},{n:'',c:3}];
+function drawSetup(){$('cnt').innerHTML='';[2,3,4].forEach(n=>{const b=document.createElement('button');b.textContent=n;b.className=n==np?'on':'';b.style.margin='0 5px';b.onclick=()=>{np=n;drawSetup()};$('cnt').appendChild(b)});
+$('rows').innerHTML='';for(let i=0;i<np;i++){const r=document.createElement('div');r.className='prow';r.innerHTML=`<span class="tok" style="background:${COLORS[setup[i].c]}">${EMO[i]}</span><input maxlength="12" placeholder="Player ${i+1}" value="${setup[i].n}" oninput="setup[${i}].n=this.value">`;COLORS.forEach((c,ci)=>{const s=document.createElement('button');s.className='sw'+(setup[i].c==ci?' on':'');s.style.background=c;s.onclick=()=>{const o=setup.findIndex((p,j)=>j<np&&j!=i&&p.c==ci);if(o>=0)setup[o].c=setup[i].c;setup[i].c=ci;drawSetup()};r.appendChild(s)});$('rows').appendChild(r)}}
+$('go').onclick=()=>{G={players:setup.slice(0,np).map((p,i)=>({name:p.n.trim()||'Player '+(i+1),color:COLORS[p.c],emo:EMO[i],pos:0})),cur:0,turn:1,dares:{},done:0,busy:false,snakes:[],nextId:0};DARESQ.forEach(s=>G.dares[s]=pick(POOL));
+[[97,76],[62,19],[48,12]].forEach(([h,t])=>addSnake(h,t));
+$('setup').style.display='none';$('game').style.display='grid';buildBoard();updUI();say("Dorm night begins... roll the dice!");cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)};
+$('rst').onclick=()=>{cancelAnimationFrame(raf);$('game').style.display='none';$('setup').style.display='block';$('win').classList.remove('on')};
+$('again').onclick=$('rst').onclick;
+$('snd').onclick=()=>{snd=!snd;$('snd').textContent=snd?'🔊':'🔇'};
+// snakes
+function addSnake(h,t,enter){const s={id:G.nextId++,head:h,tail:t,col:SNC[G.nextId%SNC.length],moving:false,hl:false,from:{h:xy(h),t:xy(t)},to:{h:xy(h),t:xy(t)},t0:0,dur:1};if(enter)s.moving=true;G.snakes.push(s);buildSnakeEl(s);return s}
+function reserved(excl){const r=new Set([1,100,...DARESQ]);LADDERS.forEach(l=>{r.add(l[0]);r.add(l[1])});G.snakes.forEach(s=>{if(s===excl)return;r.add(s.head);r.add(s.tail);if(s.nh)r.add(s.nh);if(s.nt)r.add(s.nt)});return r}
+function findSquares(excl){const r=reserved(excl),pp=G.players.map(p=>p.pos);for(let i=0;i<300;i++){const h=20+rnd(79),t=2+rnd(h-12);if(h<=t+10||r.has(h)||r.has(t)||pp.includes(h)||h===t)continue;if(Math.abs(xy(h).x-xy(t).x)+Math.abs(xy(h).y-xy(t).y)<150)continue;return[h,t]}return null}
+function edgePt(p,extra){const d=[[p.x,-extra],[p.x,1000+extra],[-extra,p.y],[1000+extra,p.y]],ds=[p.y,1000-p.y,p.x,1000-p.x];return{x:d[ds.indexOf(Math.min(...ds))][0],y:d[ds.indexOf(Math.min(...ds))][1]}}
+function startMove(s,h,t,from,dur,enter){s.nh=h;s.nt=t;s.from=from||{h:xy(s.head),t:xy(s.tail)};s.to={h:xy(h),t:xy(t)};s.t0=performance.now();s.dur=dur;s.moving=true;s.enter=enter;S.hiss()}
+function chaos(){const t=G.turn,max=Math.min(10,3+Math.floor(t/5));
+if(t>=4&&G.snakes.length<max&&Math.random()<.25){const sq=findSquares();if(sq){const s=addSnake(sq[0],sq[1],true),th=xy(sq[0]);startMove(s,sq[0],sq[1],{h:edgePt(th,160),t:edgePt(th,420)},4500,true);s.head=sq[0];s.tail=sq[1];say(pick(["Another snake?!","A new snake slithers in from outside...","Things are getting suspicious..."]));return}}
+if(t>=2&&Math.random()<.4){const c=G.snakes.filter(s=>!s.moving);if(!c.length)return;const s=pick(c),sq=findSquares(s);if(sq){startMove(s,sq[0],sq[1],null,3800);say(pick(["A snake is relocating...","Dorm night is escalating.","Snake on the move! Check its head."]))}}}
+// board
+function buildBoard(){const bs=$('bs');bs.innerHTML='';el('rect',{x:-14,y:-14,width:1028,height:1028,rx:14,fill:'#2a140d'},bs);el('rect',{x:-6,y:-6,width:1012,height:1012,rx:10,fill:'#24523b'},bs);
+for(let n=1;n<=100;n++){const p=xy(n),d=G.dares[n]!==undefined,alt=(Math.floor((n-1)/10)+(n-1))%2;el('rect',{x:p.x-48,y:p.y-48,width:96,height:96,rx:6,fill:d?'#e8762b':alt?'#f6ecd2':'#ecd9a6',stroke:'#2a140d','stroke-width':2,transform:`rotate(${(n*7%5)-2} ${p.x} ${p.y})`},bs);
+const t=el('text',{x:p.x-42,y:p.y-30,'font-size':22,'font-family':'Permanent Marker',fill:'#2a140d'},bs);t.textContent=n;
+if(d){const g=el('g',{},bs);el('text',{x:p.x+8,y:p.y+14,'font-size':34,'text-anchor':'middle'},g).textContent=pick(['⚠️','⭐','😈']);const q=el('text',{x:p.x,y:p.y+40,'font-size':20,'text-anchor':'middle','font-family':'Permanent Marker',fill:'#fff'},g);q.textContent='DARE'}}
+const fl=el('text',{x:50,y:60,'font-size':0},bs);
+[['START ↓ 🩴',-100,990],['🏁 FINISH',50,-30]].forEach(a=>{const e=el('text',{x:a[1],y:a[2],'font-size':32,'font-family':'Caveat',fill:'#f6ecd2','font-weight':700},bs);e.textContent=a[0]});
+LADDERS.forEach(([b,t])=>{const p=xy(b),q=xy(t),g=el('g',{},bs),dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy),nx=-dy/L*10,ny=dx/L*10;
+el('line',{x1:p.x+nx,y1:p.y+ny,x2:q.x+nx,y2:q.y+ny,stroke:'#8b5a2b','stroke-width':6,'stroke-linecap':'round'},g);el('line',{x1:p.x-nx,y1:p.y-ny,x2:q.x-nx,y2:q.y-ny,stroke:'#8b5a2b','stroke-width':6,'stroke-linecap':'round'},g);
+for(let i=1;i<L/30;i++){const k=i*30/L;el('line',{x1:p.x+dx*k+nx,y1:p.y+dy*k+ny,x2:p.x+dx*k-nx,y2:p.y+dy*k-ny,stroke:'#b07a3a','stroke-width':5,'stroke-linecap':'round'},g)}});
+G.sg=el('g',{},bs);G.snakes.forEach(buildSnakeEl);G.pg=el('g',{},bs);
+G.players.forEach((p,i)=>{const g=el('g',{class:'pc'},G.pg);el('circle',{r:17,fill:p.color,stroke:'#fff','stroke-width':4},g);el('text',{y:7,'font-size':20,'text-anchor':'middle'},g).textContent=p.emo;p.g=g;place(p,0)});}
+function buildSnakeEl(s){if(!G.sg)return;const g=el('g',{},G.sg);s.o=el('path',{fill:'none','stroke-linecap':'round','stroke-linejoin':'round','stroke-width':22},g);s.b=el('path',{fill:'none','stroke-linecap':'round','stroke-linejoin':'round','stroke-width':15,stroke:s.col},g);s.pt=el('path',{fill:'none','stroke-linecap':'round','stroke-width':4,stroke:'#ffffff88','stroke-dasharray':'2 14'},g);
+s.hd=el('g',{},g);el('ellipse',{rx:20,ry:15,fill:s.col,stroke:'#1b0f0a','stroke-width':3},s.hd);el('circle',{cx:6,cy:-7,r:4.5,fill:'#fff'},s.hd);el('circle',{cx:6,cy:7,r:4.5,fill:'#fff'},s.hd);el('circle',{cx:7,cy:-7,r:2,fill:'#000'},s.hd);el('circle',{cx:7,cy:7,r:2,fill:'#000'},s.hd);el('path',{d:'M20 0 L32 0 L37 -5 M32 0 L37 5',stroke:'#d00',fill:'none','stroke-width':2.5},s.hd);
+s.lb=el('text',{'font-size':22,'font-family':'Permanent Marker',fill:'#fff','stroke':'#000','stroke-width':.8,'paint-order':'stroke'},g);s.g=g}
+function ease(k){return k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2}
+function frame(now){const t=now/1000;G.snakes.forEach(s=>{let k=Math.min(1,(now-s.t0)/s.dur);if(s.t0===0)k=1;k=ease(k);
+if(s.moving&&s.t0&&now-s.t0>=s.dur){s.head=s.nh;s.tail=s.nt;s.moving=false;s.from={h:xy(s.head),t:xy(s.tail)};s.to=s.from;s.t0=0;k=1;updUI()}
+const L=(a,b)=>a+(b-a)*k,h={x:L(s.from.h.x,s.to.h.x),y:L(s.from.h.y,s.to.h.y)},tl={x:L(s.from.t.x,s.to.t.x),y:L(s.from.t.y,s.to.t.y)};
+const dx=tl.x-h.x,dy=tl.y-h.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,N=26;let d='',a0=0,pts=[];
+const amp=s.moving?30:20,fr=Math.max(2,len/110);
+for(let i=0;i<=N;i++){const u=i/N,w=amp*Math.sin(u*Math.PI*fr*1.1-t*(s.moving?5:2.2)+s.id*2)*Math.sin(Math.min(1,u*6+.15)*Math.PI/2)*(1-u*.4);pts.push([h.x+dx*u+nx*w,h.y+dy*u+ny*w])}
+d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+s.o.setAttribute('d',d);s.b.setAttribute('d',d);s.pt.setAttribute('d',d);s.o.setAttribute('stroke',s.hl?'#fff36a':'#1b0f0a');s.g.style.opacity=s.moving?.82:1;s.g.style.filter=s.hl?'drop-shadow(0 0 12px #fff36a)':'';
+const ang=Math.atan2(pts[0][1]-pts[1][1],pts[0][0]-pts[1][0])*180/Math.PI;s.hd.setAttribute('transform',`translate(${pts[0][0]} ${pts[0][1]}) rotate(${ang})`);
+s.lb.setAttribute('x',pts[0][0]+14);s.lb.setAttribute('y',pts[0][1]-22);s.lb.textContent=s.moving?'🐍':'→'+s.tail;});
+raf=requestAnimationFrame(frame)}
+function place(p,pos,dur){const i=G.players.indexOf(p),off=[[-16,-14],[16,-14],[-16,14],[16,14]][i];let c=pos?xy(pos):{x:-50,y:930};p.g.style.transition=dur?`transform ${dur}ms ease-in-out`:'';p.g.style.transform=`translate(${c.x+off[0]}px,${c.y+off[1]}px)`}
+function say(m){$('msg').textContent=m}
+function updUI(){$('pls').innerHTML='';G.players.forEach((p,i)=>{const d=document.createElement('div');d.className='pl'+(i==G.cur?' cur':'');d.innerHTML=`<span class="tok" style="background:${p.color}">${p.emo}</span><span style="flex:1">${p.name}</span><b>${p.pos||'start'}</b>`;$('pls').appendChild(d)});
+$('sTurn').textContent=G.turn;$('sSn').textContent=G.snakes.filter(s=>!s.moving).length+(G.snakes.some(s=>s.moving)?'+':'');$('sDr').textContent=G.done;$('turnName').innerHTML=`<span style="color:${G.players[G.cur].color}">●</span> ${G.players[G.cur].name}'s turn`}
+// gameplay
+$('rollBtn').onclick=async()=>{if(G.busy)return;G.busy=true;$('rollBtn').disabled=true;const D=$('dice');D.classList.add('roll');S.roll();for(let i=0;i<9;i++){D.textContent=1+rnd(6);await sleep(90)}D.classList.remove('roll');const r=1+rnd(6);D.textContent=r;await sleep(300);
+const p=G.players[G.cur];let again=r===6;
+if(p.pos+r>100){say("Too far! You need an exact roll to finish.")}else{say(`${p.name} rolled ${r}.`);for(let i=0;i<r;i++){p.pos++;place(p,p.pos,250);S.step();await sleep(280)}
+await resolve(p)}
+updUI();if(p.pos===100)return win(p);
+if(!again)G.cur=(G.cur+1)%G.players.length;else say(p.name+" rolled a 6 — roll again!");
+G.turn++;if(Math.random()<.3&&!again)say(pick(QUIPS));chaos();updUI();G.busy=false;$('rollBtn').disabled=false};
+async function resolve(p){for(let guard=0;guard<4;guard++){const lad=LADDERS.find(l=>l[0]===p.pos);
+if(lad){say("That ladder just saved you.");S.ladder();p.pos=lad[1];place(p,p.pos,1300);await sleep(1400);continue}
+const sn=G.snakes.find(s=>!s.moving&&s.head===p.pos);
+if(sn){say(pick(["Another snake?!","Bad decisions were made.","SSSSSNAKE!"]));S.hiss();sn.hl=true;await sleep(1100);p.pos=sn.tail;place(p,p.pos,1500);await sleep(1600);sn.hl=false;continue}
+break}
+if(G.dares[p.pos]!==undefined&&p.pos<100)await dare(p)}
+function dare(p){S.dare();const sq=p.pos;return new Promise(res=>{$('who').textContent=p.name+' landed on square '+sq;$('dtext').textContent=G.dares[sq];$('modal').classList.add('on');
+$('dNew').onclick=()=>{G.dares[sq]=pick(POOL);$('dtext').textContent=G.dares[sq];S.dare()};
+$('dDone').onclick=()=>{$('modal').classList.remove('on');G.done++;let n;do n=pick(POOL);while(n===G.dares[sq]);G.dares[sq]=n;updUI();res()}})}
+function win(p){S.win();$('wname').textContent=p.name+' '+p.emo;$('win').classList.add('on');for(let i=0;i<90;i++){const c=document.createElement('div');c.className='conf';c.style.left=Math.random()*100+'vw';c.style.background=pick(COLORS.concat(['#e5b72e']));c.style.animationDuration=2+Math.random()*3+'s';c.style.animationDelay=Math.random()*1.5+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),6500)}}
+drawSetup();
+</script></body></html>

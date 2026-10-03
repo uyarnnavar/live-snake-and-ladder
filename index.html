@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Dorm Night: Snakes & Ladders</title>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
@@ -23,8 +24,12 @@ aside{display:flex;flex-direction:column;gap:14px}
 #bw{width:min(92vh,56vw);aspect-ratio:1}
 #bs{width:100%;height:100%;overflow:visible}
 .pc{transition:transform .28s ease-in-out}
-#dice{width:90px;height:90px;margin:0 auto;background:#fffbea;color:var(--ink);border:4px solid var(--ink);border-radius:16px;display:grid;place-items:center;font-size:56px;font-family:'Permanent Marker';box-shadow:5px 5px 0 #000a}
-#dice.roll{animation:shake .12s infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-6px)}50%{transform:rotate(12deg) translateY(4px)}100%{transform:rotate(-8deg)}}
+#scene{width:90px;height:90px;margin:0 auto;perspective:500px}
+#scene.hop{animation:hop 1.7s}@keyframes hop{0%,100%{transform:translateY(0)}30%{transform:translateY(-34px)}60%{transform:translateY(-6px)}80%{transform:translateY(-14px)}}
+#cube{width:90px;height:90px;position:relative;transform-style:preserve-3d}
+.face{position:absolute;inset:0;background:linear-gradient(135deg,#fffdf0,#eadfb8);border:3px solid #2a140d;border-radius:16px;display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:10px;box-shadow:inset 0 0 12px #0003}
+.face i{width:15px;height:15px;border-radius:50%;margin:auto;background:radial-gradient(circle at 35% 35%,#555,#1a0d08)}.face i.r{background:radial-gradient(circle at 35% 35%,#e8484f,#a01820);width:19px;height:19px}
+.f1{transform:translateZ(45px)}.f6{transform:rotateY(180deg) translateZ(45px)}.f2{transform:rotateY(90deg) translateZ(45px)}.f5{transform:rotateY(-90deg) translateZ(45px)}.f3{transform:rotateX(90deg) translateZ(45px)}.f4{transform:rotateX(-90deg) translateZ(45px)}
 .stat{display:flex;justify-content:space-between;border-bottom:2px dashed #f6ecd255;padding:2px 0}
 #msg{min-height:80px;font-size:26px;font-weight:700}
 .ov{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50}
@@ -39,7 +44,7 @@ aside{display:flex;flex-direction:column;gap:14px}
 <div id="setup"><h1>WHO'S SURVIVING DORM NIGHT?</h1><div class="note"><p style="margin:0 0 6px">How many roommates?</p><div class="cnt" id="cnt"></div><div id="rows"></div><p style="margin:8px 0">🍜 ☕ ⏰ 🩴 &nbsp;Snakes will multiply. Dares are mandatory. Sleep is not.</p><button id="go" style="font-size:26px;background:var(--org);color:#fff">START DORM NIGHT!</button></div></div>
 <div id="game"><aside><div class="note"><h2 style="margin:0 0 6px">Roommates</h2><div id="pls"></div></div><div class="note" style="background:#fff2b8"><div class="stat"><span>Turn</span><b id="sTurn">1</b></div><div class="stat"><span>Snakes</span><b id="sSn">3</b></div><div class="stat"><span>Dares done</span><b id="sDr">0</b></div></div></aside>
 <div id="bw"><svg id="bs" viewBox="-120 -120 1240 1240"></svg></div>
-<aside><div class="note" style="text-align:center"><div id="turnName" class="mk" style="margin-bottom:10px;font-size:24px"></div><div id="dice">🎲</div><br><button id="rollBtn" style="background:var(--org);color:#fff;font-size:24px">ROLL DICE</button></div>
+<aside><div class="note" style="text-align:center"><div id="turnName" class="mk" style="margin-bottom:10px;font-size:24px"></div><div id="scene"><div id="cube"></div></div><br><button id="rollBtn" style="background:var(--org);color:#fff;font-size:24px">ROLL DICE</button></div>
 <div class="note" id="msg" style="transform:rotate(1.5deg);background:#fff2b8">Dorm night begins...</div>
 <div style="display:flex;gap:10px;justify-content:center"><button id="snd">🔊</button><button id="rst">Restart</button></div></aside></div>
 <div class="ov" id="modal"><div class="pop"><h2>DORM DARE!</h2><div id="who" class="mk"></div><div id="dtext"></div><button id="dDone" style="background:#3fa66b;color:#fff">DONE ✓</button> <button id="dNew">NEW DARE ↻</button></div></div>
@@ -67,7 +72,7 @@ function drawSetup(){$('cnt').innerHTML='';[2,3,4].forEach(n=>{const b=document.
 $('rows').innerHTML='';for(let i=0;i<np;i++){const r=document.createElement('div');r.className='prow';r.innerHTML=`<span class="tok" style="background:${COLORS[setup[i].c]}">${EMO[i]}</span><input maxlength="12" placeholder="Player ${i+1}" value="${setup[i].n}" oninput="setup[${i}].n=this.value">`;COLORS.forEach((c,ci)=>{const s=document.createElement('button');s.className='sw'+(setup[i].c==ci?' on':'');s.style.background=c;s.onclick=()=>{const o=setup.findIndex((p,j)=>j<np&&j!=i&&p.c==ci);if(o>=0)setup[o].c=setup[i].c;setup[i].c=ci;drawSetup()};r.appendChild(s)});$('rows').appendChild(r)}}
 $('go').onclick=()=>{G={players:setup.slice(0,np).map((p,i)=>({name:p.n.trim()||'Player '+(i+1),color:COLORS[p.c],emo:EMO[i],pos:0})),cur:0,turn:1,dares:{},done:0,busy:false,snakes:[],nextId:0};DARESQ.forEach(s=>G.dares[s]=pick(POOL));
 [[97,76],[62,19],[48,12]].forEach(([h,t])=>addSnake(h,t));
-$('setup').style.display='none';$('game').style.display='grid';buildBoard();updUI();say("Dorm night begins... roll the dice!");cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)};
+$('setup').style.display='none';$('game').style.display='grid';buildBoard();updUI();say("Everyone starts off the board. Roll a 1 to enter!");cancelAnimationFrame(raf);raf=requestAnimationFrame(frame)};
 $('rst').onclick=()=>{cancelAnimationFrame(raf);$('game').style.display='none';$('setup').style.display='block';$('win').classList.remove('on')};
 $('again').onclick=$('rst').onclick;
 $('snd').onclick=()=>{snd=!snd;$('snd').textContent=snd?'🔊':'🔇'};
@@ -85,49 +90,73 @@ function buildBoard(){const bs=$('bs');bs.innerHTML='';el('rect',{x:-14,y:-14,wi
 for(let n=1;n<=100;n++){const p=xy(n),d=G.dares[n]!==undefined,alt=(Math.floor((n-1)/10)+(n-1))%2;el('rect',{x:p.x-48,y:p.y-48,width:96,height:96,rx:6,fill:d?'#e8762b':alt?'#f6ecd2':'#ecd9a6',stroke:'#2a140d','stroke-width':2,transform:`rotate(${(n*7%5)-2} ${p.x} ${p.y})`},bs);
 const t=el('text',{x:p.x-42,y:p.y-30,'font-size':22,'font-family':'Permanent Marker',fill:'#2a140d'},bs);t.textContent=n;
 if(d){const g=el('g',{},bs);el('text',{x:p.x+8,y:p.y+14,'font-size':34,'text-anchor':'middle'},g).textContent=pick(['⚠️','⭐','😈']);const q=el('text',{x:p.x,y:p.y+40,'font-size':20,'text-anchor':'middle','font-family':'Permanent Marker',fill:'#fff'},g);q.textContent='DARE'}}
-const fl=el('text',{x:50,y:60,'font-size':0},bs);
+el('rect',{x:-110,y:850,width:100,height:150,rx:12,fill:'#f6ecd2','fill-opacity':.15,stroke:'#f6ecd2','stroke-dasharray':'8 6','stroke-width':3},bs);el('text',{x:-104,y:874,'font-size':24,'font-family':'Caveat',fill:'#e5b72e','font-weight':700},bs).textContent='roll a 1!';
 [['START ↓ 🩴',-100,990],['🏁 FINISH',50,-30]].forEach(a=>{const e=el('text',{x:a[1],y:a[2],'font-size':32,'font-family':'Caveat',fill:'#f6ecd2','font-weight':700},bs);e.textContent=a[0]});
 LADDERS.forEach(([b,t])=>{const p=xy(b),q=xy(t),g=el('g',{},bs),dx=q.x-p.x,dy=q.y-p.y,L=Math.hypot(dx,dy),nx=-dy/L*10,ny=dx/L*10;
 el('line',{x1:p.x+nx,y1:p.y+ny,x2:q.x+nx,y2:q.y+ny,stroke:'#8b5a2b','stroke-width':6,'stroke-linecap':'round'},g);el('line',{x1:p.x-nx,y1:p.y-ny,x2:q.x-nx,y2:q.y-ny,stroke:'#8b5a2b','stroke-width':6,'stroke-linecap':'round'},g);
 for(let i=1;i<L/30;i++){const k=i*30/L;el('line',{x1:p.x+dx*k+nx,y1:p.y+dy*k+ny,x2:p.x+dx*k-nx,y2:p.y+dy*k-ny,stroke:'#b07a3a','stroke-width':5,'stroke-linecap':'round'},g)}});
 G.sg=el('g',{},bs);G.snakes.forEach(buildSnakeEl);G.pg=el('g',{},bs);
 G.players.forEach((p,i)=>{const g=el('g',{class:'pc'},G.pg);el('circle',{r:17,fill:p.color,stroke:'#fff','stroke-width':4},g);el('text',{y:7,'font-size':20,'text-anchor':'middle'},g).textContent=p.emo;p.g=g;place(p,0)});}
-function buildSnakeEl(s){if(!G.sg)return;const g=el('g',{},G.sg);s.o=el('path',{fill:'none','stroke-linecap':'round','stroke-linejoin':'round','stroke-width':22},g);s.b=el('path',{fill:'none','stroke-linecap':'round','stroke-linejoin':'round','stroke-width':15,stroke:s.col},g);s.pt=el('path',{fill:'none','stroke-linecap':'round','stroke-width':4,stroke:'#ffffff88','stroke-dasharray':'2 14'},g);
-s.hd=el('g',{},g);el('ellipse',{rx:20,ry:15,fill:s.col,stroke:'#1b0f0a','stroke-width':3},s.hd);el('circle',{cx:6,cy:-7,r:4.5,fill:'#fff'},s.hd);el('circle',{cx:6,cy:7,r:4.5,fill:'#fff'},s.hd);el('circle',{cx:7,cy:-7,r:2,fill:'#000'},s.hd);el('circle',{cx:7,cy:7,r:2,fill:'#000'},s.hd);el('path',{d:'M20 0 L32 0 L37 -5 M32 0 L37 5',stroke:'#d00',fill:'none','stroke-width':2.5},s.hd);
-s.lb=el('text',{'font-size':22,'font-family':'Permanent Marker',fill:'#fff','stroke':'#000','stroke-width':.8,'paint-order':'stroke'},g);s.g=g}
+function buildSnakeEl(s){if(!G.sg)return;const g=el('g',{},G.sg);s.g=g;
+s.body=el('path',{fill:s.col,stroke:'#14090a','stroke-width':3,'stroke-linejoin':'round'},g);
+s.bl=[];s.dt=[];for(let i=0;i<14;i++)s.bl.push(el('ellipse',{fill:'#000','fill-opacity':.3},g));for(let i=0;i<14;i++)s.dt.push(el('circle',{fill:'#fff','fill-opacity':.32,r:2.2},g));
+s.pt=el('path',{fill:'none','stroke-linecap':'round','stroke-width':3,stroke:'#f3e3b0','stroke-opacity':.5,'stroke-dasharray':'1 7'},g);
+const h=s.hd=el('g',{},g);s.tg=el('path',{fill:'none',stroke:'#d1122b','stroke-width':2.5,'stroke-linecap':'round'},h);
+el('path',{d:'M-8,-10 C4,-17 22,-10 33,0 C22,10 4,17 -8,10 Z',fill:s.col,stroke:'#14090a','stroke-width':3,'stroke-linejoin':'round'},h);
+el('path',{d:'M-2,-6 C6,-8 14,-6 22,-2 M-2,6 C6,8 14,6 22,2',stroke:'#000','stroke-opacity':.3,'stroke-width':2,fill:'none'},h);
+[-1,1].forEach(q=>{el('ellipse',{cx:11,cy:6.5*q,rx:4.5,ry:3.6,fill:'#f2c230',stroke:'#000','stroke-width':1},h);el('ellipse',{cx:11.5,cy:6.5*q,rx:1.1,ry:3.2,fill:'#000'},h);el('circle',{cx:27,cy:2.2*q,r:1.2,fill:'#000'},h)});
+s.lb=el('text',{'font-size':22,'font-family':'Permanent Marker',fill:'#fff',stroke:'#000','stroke-width':.8,'paint-order':'stroke'},g);s.lt=el('text',{'font-size':15,'font-family':'Permanent Marker',fill:'#fff',stroke:'#000','stroke-width':.8,'paint-order':'stroke'},g)}
 function ease(k){return k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2}
 function frame(now){const t=now/1000;G.snakes.forEach(s=>{let k=Math.min(1,(now-s.t0)/s.dur);if(s.t0===0)k=1;k=ease(k);
 if(s.moving&&s.t0&&now-s.t0>=s.dur){s.head=s.nh;s.tail=s.nt;s.moving=false;s.from={h:xy(s.head),t:xy(s.tail)};s.to=s.from;s.t0=0;k=1;updUI()}
 const L=(a,b)=>a+(b-a)*k,h={x:L(s.from.h.x,s.to.h.x),y:L(s.from.h.y,s.to.h.y)},tl={x:L(s.from.t.x,s.to.t.x),y:L(s.from.t.y,s.to.t.y)};
-const dx=tl.x-h.x,dy=tl.y-h.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,N=26;let d='',a0=0,pts=[];
-const amp=s.moving?30:20,fr=Math.max(2,len/110);
-for(let i=0;i<=N;i++){const u=i/N,w=amp*Math.sin(u*Math.PI*fr*1.1-t*(s.moving?5:2.2)+s.id*2)*Math.sin(Math.min(1,u*6+.15)*Math.PI/2)*(1-u*.4);pts.push([h.x+dx*u+nx*w,h.y+dy*u+ny*w])}
-d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
-s.o.setAttribute('d',d);s.b.setAttribute('d',d);s.pt.setAttribute('d',d);s.o.setAttribute('stroke',s.hl?'#fff36a':'#1b0f0a');s.g.style.opacity=s.moving?.82:1;s.g.style.filter=s.hl?'drop-shadow(0 0 12px #fff36a)':'';
-const ang=Math.atan2(pts[0][1]-pts[1][1],pts[0][0]-pts[1][0])*180/Math.PI;s.hd.setAttribute('transform',`translate(${pts[0][0]} ${pts[0][1]}) rotate(${ang})`);
-s.lb.setAttribute('x',pts[0][0]+14);s.lb.setAttribute('y',pts[0][1]-22);s.lb.textContent=s.moving?'🐍':'→'+s.tail;});
+const dx=tl.x-h.x,dy=tl.y-h.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,N=44,fr=Math.max(2.2,len/95),amp=s.moving?34:26,P=[],W=[];
+for(let i=0;i<=N;i++){const u=i/N,env=Math.sin(Math.min(1,u*5)*Math.PI/2)*(1-u*u*u),w=amp*Math.sin(u*Math.PI*fr*1.15-t*(s.moving?4.5:1.8)+s.id*2)*env;P.push([h.x+dx*u+nx*w,h.y+dy*u+ny*w]);
+const base=u<.08?6.5+u*30:9+4.5*Math.sin(Math.min(1,(u-.08)/.3)*Math.PI/2);W.push(base*(1-Math.pow(Math.max(0,(u-.55)/.45),1.6)*.9)+.8)}
+s.pts=P;const Lf=[],Rt=[],NR=[];
+for(let i=0;i<=N;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(N,i+1)],tx=b[0]-a[0],ty=b[1]-a[1],l=Math.hypot(tx,ty)||1,qx=-ty/l,qy=tx/l;NR.push([qx,qy,Math.atan2(ty,tx)*180/Math.PI]);Lf.push((P[i][0]+qx*W[i]).toFixed(1)+' '+(P[i][1]+qy*W[i]).toFixed(1));Rt.push((P[i][0]-qx*W[i]).toFixed(1)+' '+(P[i][1]-qy*W[i]).toFixed(1))}
+s.body.setAttribute('d','M'+Lf.join(' L')+' L'+Rt.reverse().join(' L')+'Z');
+s.pt.setAttribute('d','M'+P.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L'));
+for(let j=0;j<14;j++){const i=Math.min(N-2,3+Math.round(j*(N-8)/13)),c=P[i],w=W[i],e=s.bl[j];e.setAttribute('cx',c[0]);e.setAttribute('cy',c[1]);e.setAttribute('rx',Math.max(1.5,w*.8));e.setAttribute('ry',Math.max(1,w*.62));e.setAttribute('transform',`rotate(${NR[i][2]+90} ${c[0]} ${c[1]})`);
+const i2=Math.min(N-1,i+2),sg=j%2?1:-1,d=s.dt[j];d.setAttribute('cx',P[i2][0]+NR[i2][0]*W[i2]*.62*sg);d.setAttribute('cy',P[i2][1]+NR[i2][1]*W[i2]*.62*sg);d.setAttribute('r',Math.max(.8,W[i2]*.2))}
+s.body.setAttribute('stroke',s.hl?'#fff36a':'#14090a');s.g.style.opacity=s.moving?.82:1;s.g.style.filter=s.hl?'drop-shadow(0 0 12px #fff36a)':'';
+const ang=Math.atan2(P[0][1]-P[2][1],P[0][0]-P[2][0])*180/Math.PI,f=Math.max(0,Math.sin(t*3+s.id*3)),TL=6+14*f;
+s.hd.setAttribute('transform',`translate(${P[0][0]} ${P[0][1]}) rotate(${ang})`);s.tg.setAttribute('d',`M32 0 L${32+TL} 0 M${32+TL} 0 l5 -4 M${32+TL} 0 l5 4`);
+s.lb.setAttribute('x',P[0][0]+14);s.lb.setAttribute('y',P[0][1]-22);s.lb.textContent=s.moving?'🐍':'→'+s.tail;
+s.lt.setAttribute('x',P[N][0]+8);s.lt.setAttribute('y',P[N][1]+16);s.lt.textContent=s.moving?'':s.tail});
 raf=requestAnimationFrame(frame)}
 function place(p,pos,dur){const i=G.players.indexOf(p),off=[[-16,-14],[16,-14],[-16,14],[16,14]][i];let c=pos?xy(pos):{x:-50,y:930};p.g.style.transition=dur?`transform ${dur}ms ease-in-out`:'';p.g.style.transform=`translate(${c.x+off[0]}px,${c.y+off[1]}px)`}
 function say(m){$('msg').textContent=m}
 function updUI(){$('pls').innerHTML='';G.players.forEach((p,i)=>{const d=document.createElement('div');d.className='pl'+(i==G.cur?' cur':'');d.innerHTML=`<span class="tok" style="background:${p.color}">${p.emo}</span><span style="flex:1">${p.name}</span><b>${p.pos||'start'}</b>`;$('pls').appendChild(d)});
 $('sTurn').textContent=G.turn;$('sSn').textContent=G.snakes.filter(s=>!s.moving).length+(G.snakes.some(s=>s.moving)?'+':'');$('sDr').textContent=G.done;$('turnName').innerHTML=`<span style="color:${G.players[G.cur].color}">●</span> ${G.players[G.cur].name}'s turn`}
 // gameplay
-$('rollBtn').onclick=async()=>{if(G.busy)return;G.busy=true;$('rollBtn').disabled=true;const D=$('dice');D.classList.add('roll');S.roll();for(let i=0;i<9;i++){D.textContent=1+rnd(6);await sleep(90)}D.classList.remove('roll');const r=1+rnd(6);D.textContent=r;await sleep(300);
-const p=G.players[G.cur];let again=r===6;
-if(p.pos+r>100){say("Too far! You need an exact roll to finish.")}else{say(`${p.name} rolled ${r}.`);for(let i=0;i<r;i++){p.pos++;place(p,p.pos,250);S.step();await sleep(280)}
-await resolve(p)}
+$('rollBtn').onclick=async()=>{if(G.busy)return;G.busy=true;$('rollBtn').disabled=true;const r=1+rnd(6),tk=setInterval(()=>tone(220+rnd(260),.05,'square',.03),170);$('scene').classList.add('hop');await rollDice(r);clearInterval(tk);$('scene').classList.remove('hop');await sleep(300);
+const p=G.players[G.cur];let again=false;
+if(p.pos===0){if(r===1){say(`${p.name} rolled a 1: welcome to the board!`);p.pos=1;place(p,1,800);S.step();await sleep(900);await resolve(p)}else say(`${p.name} rolled ${r}. Need a 1 to enter the board!`)}
+else if(p.pos+r>100)say("Too far! You need an exact roll to finish.");
+else{again=r===6;say(`${p.name} rolled ${r}.`);for(let i=0;i<r;i++){p.pos++;place(p,p.pos,250);S.step();await sleep(280)}await resolve(p)}
 updUI();if(p.pos===100)return win(p);
-if(!again)G.cur=(G.cur+1)%G.players.length;else say(p.name+" rolled a 6 — roll again!");
+if(!again)G.cur=(G.cur+1)%G.players.length;else say(p.name+" rolled a 6: roll again!");
 G.turn++;if(Math.random()<.3&&!again)say(pick(QUIPS));chaos();updUI();G.busy=false;$('rollBtn').disabled=false};
+const OFF=[[-16,-14],[16,-14],[-16,14],[16,14]];
+function tw(dur,fn){return new Promise(res=>{const t0=performance.now();(function f(n){const k=Math.min(1,(n-t0)/dur);fn(k);k<1?requestAnimationFrame(f):res()})(t0)})}
+function put(p,x,y){const o=OFF[G.players.indexOf(p)];p.g.style.transition='none';p.g.style.transform=`translate(${x+o[0]}px,${y+o[1]}px)`}
+async function climb(p,a,b){const A=xy(a),B=xy(b),n=Math.max(4,Math.round(Math.hypot(B.x-A.x,B.y-A.y)/30));let last=0;await tw(1800,k=>{put(p,A.x+(B.x-A.x)*k,A.y+(B.y-A.y)*k-Math.abs(Math.sin(k*n*Math.PI))*10);const st=Math.floor(k*n);if(st!==last){last=st;tone(380+st*35,.07,'triangle',.06)}});place(p,b,0)}
+async function slide(p,sn){S.hiss();await tw(2200,k=>{const e=k*k*(3-2*k),P=sn.pts,f=e*(P.length-1),i=Math.min(P.length-2,Math.floor(f)),u=f-i;put(p,P[i][0]+(P[i+1][0]-P[i][0])*u,P[i][1]+(P[i+1][1]-P[i][1])*u)});place(p,sn.tail,0)}
 async function resolve(p){for(let guard=0;guard<4;guard++){const lad=LADDERS.find(l=>l[0]===p.pos);
-if(lad){say("That ladder just saved you.");S.ladder();p.pos=lad[1];place(p,p.pos,1300);await sleep(1400);continue}
+if(lad){say("That ladder just saved you.");S.ladder();await climb(p,lad[0],lad[1]);p.pos=lad[1];continue}
 const sn=G.snakes.find(s=>!s.moving&&s.head===p.pos);
-if(sn){say(pick(["Another snake?!","Bad decisions were made.","SSSSSNAKE!"]));S.hiss();sn.hl=true;await sleep(1100);p.pos=sn.tail;place(p,p.pos,1500);await sleep(1600);sn.hl=false;continue}
+if(sn){say(pick(["Another snake?!","Bad decisions were made.","SSSSSNAKE!"]));S.hiss();sn.hl=true;await sleep(1100);await slide(p,sn);p.pos=sn.tail;await sleep(300);sn.hl=false;continue}
 break}
 if(G.dares[p.pos]!==undefined&&p.pos<100)await dare(p)}
 function dare(p){S.dare();const sq=p.pos;return new Promise(res=>{$('who').textContent=p.name+' landed on square '+sq;$('dtext').textContent=G.dares[sq];$('modal').classList.add('on');
 $('dNew').onclick=()=>{G.dares[sq]=pick(POOL);$('dtext').textContent=G.dares[sq];S.dare()};
 $('dDone').onclick=()=>{$('modal').classList.remove('on');G.done++;let n;do n=pick(POOL);while(n===G.dares[sq]);G.dares[sq]=n;updUI();res()}})}
 function win(p){S.win();$('wname').textContent=p.name+' '+p.emo;$('win').classList.add('on');for(let i=0;i<90;i++){const c=document.createElement('div');c.className='conf';c.style.left=Math.random()*100+'vw';c.style.background=pick(COLORS.concat(['#e5b72e']));c.style.animationDuration=2+Math.random()*3+'s';c.style.animationDelay=Math.random()*1.5+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),6500)}}
-drawSetup();
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]},FR={1:[0,0],2:[0,-90],3:[-90,0],4:[90,0],5:[0,90],6:[0,180]};let dX=0,dY=0;
+function buildDice(){const c=$('cube');c.innerHTML='';for(let v=1;v<=6;v++){const f=document.createElement('div');f.className='face f'+v;for(let k=0;k<9;k++){const i=document.createElement('i');if(!PIPS[v].includes(k))i.style.visibility='hidden';else if(v===1)i.className='r';f.appendChild(i)}c.appendChild(f)}dX=dY=0;c.style.transform='rotateX(0deg) rotateY(0deg)'}
+async function rollDice(v){const c=$('cube'),[bx,by]=FR[v];dX=Math.ceil(dX/360)*360+720+360*rnd(2)+bx;dY=Math.ceil(dY/360)*360+720+360*rnd(2)+by;c.style.transition='transform 1.7s cubic-bezier(.2,.7,.25,1)';c.style.transform=`rotateX(${dX}deg) rotateY(${dY}deg)`;await sleep(1800)}
+buildDice();drawSetup();
 </script></body></html>
+
+</body></html>
